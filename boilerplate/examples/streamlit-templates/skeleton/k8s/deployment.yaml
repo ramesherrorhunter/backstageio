@@ -1,0 +1,69 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ${{ values.name }}
+  labels:
+    app: ${{ values.name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ${{ values.name }}
+  template:
+    metadata:
+      labels:
+        app: ${{ values.name }}
+    spec:
+      containers:
+      - name: streamlit
+        image: ${{ values.name }}:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8501
+        resources:
+          requests:
+            memory: ${{ values.resources.memory.request }}
+            cpu: ${{ values.resources.cpu.request }}
+          limits:
+            memory: ${{ values.resources.memory.limit }}
+            cpu: ${{ values.resources.cpu.limit }}
+        livenessProbe:
+          httpGet:
+            path: /_stcore/health
+            port: 8501
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /_stcore/health
+            port: 8501
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        env:
+        - name: STREAMLIT_SERVER_PORT
+          value: "8501"
+        - name: STREAMLIT_SERVER_ADDRESS
+          value: "0.0.0.0"
+        securityContext:
+          runAsNonRoot: true
+          runAsUser: 1000
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+            - ALL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ${{ values.name }}
+  labels:
+    app: ${{ values.name }}
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+    targetPort: 8501
+    protocol: TCP
+    name: http
+  selector:
+    app: ${{ values.name }}

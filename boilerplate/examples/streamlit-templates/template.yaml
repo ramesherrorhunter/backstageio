@@ -1,0 +1,117 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: streamlit-template
+  title: Streamlit App Template
+  description: Scaffold a Streamlit application with Docker and Kubernetes deployment
+  tags:
+    - streamlit
+    - python
+    - kubernetes
+    - docker
+    - data-science
+spec:
+  owner: user:guest
+  type: service
+
+  parameters:
+    - title: Fill in app info
+      required:
+        - name
+        - description
+      properties:
+        name:
+          title: App Name
+          type: string
+          description: Unique name for your Streamlit app
+          ui:autofocus: true
+          pattern: '^[a-z0-9]+(-[a-z0-9]+)*$'
+        description:
+          title: Description
+          type: string
+          description: Describe what your Streamlit app does
+          ui:field: MarkdownEditor
+        owner:
+          title: Owner
+          type: string
+          description: Owner of the component
+          ui:field: OwnerPicker
+          ui:options:
+            allowedKinds:
+              - Group
+
+    - title: Choose a GitHub location
+      required:
+        - repoUrl
+      properties:
+        repoUrl:
+          title: GitHub Repository Location
+          type: string
+          ui:field: RepoUrlPicker
+          ui:options:
+            allowedHosts:
+              - github.com
+
+    - title: Configure Resources
+      properties:
+        cpuRequest:
+          title: CPU Request
+          type: string
+          description: CPU request for the application
+          default: "100m"
+        cpuLimit:
+          title: CPU Limit
+          type: string
+          description: CPU limit for the application
+          default: "500m"
+        memoryRequest:
+          title: Memory Request
+          type: string
+          description: Memory request for the application
+          default: "256Mi"
+        memoryLimit:
+          title: Memory Limit
+          type: string
+          description: Memory limit for the application
+          default: "512Mi"
+
+  steps:
+    - id: fetch-base
+      name: Fetch Base Skeleton
+      action: fetch:template
+      input:
+        url: ./skeleton
+        values:
+          name: ${{ parameters.name }}
+          description: ${{ parameters.description }}
+          owner: ${{ parameters.owner }}
+          cpuRequest: ${{ parameters.cpuRequest }}
+          cpuLimit: ${{ parameters.cpuLimit }}
+          memoryRequest: ${{ parameters.memoryRequest }}
+          memoryLimit: ${{ parameters.memoryLimit }}
+
+    - id: publish
+      name: Publish to GitHub
+      action: publish:github
+      input:
+        allowedHosts: ['github.com']
+        description: Streamlit application created from Backstage template
+        repoUrl: ${{ parameters.repoUrl }}
+        defaultBranch: main
+        protectDefaultBranch: true
+        repoVisibility: public
+
+    - id: register
+      name: Register in Backstage Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps['publish'].output.repoContentsUrl }}
+        catalogInfoPath: /catalog-info.yaml
+
+  output:
+    links:
+      - title: View Repository on GitHub
+        url: ${{ steps['publish'].output.remoteUrl }}
+      - title: View in Backstage Catalog
+        icon: catalog
+        entityRef: ${{ steps['register'].output.entityRef }}

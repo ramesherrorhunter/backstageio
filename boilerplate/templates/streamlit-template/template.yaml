@@ -1,0 +1,32 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: streamlit-template
+  title: Streamlit Template
+  description: Creates a Streamlit app with Docker and K8s
+spec:
+  owner: user:guest
+  type: service
+  parameters:
+    - title: Project Info
+      required:
+        - name
+      properties:
+        name:
+          type: string
+          title: Name of the project
+  steps:
+    - id: fetch-template
+      name: Fetch Streamlit Template
+      action: fetch:template
+      input:
+        url: ./content/skeleton
+        values:
+          name: ${{ parameters.name }}
+
+    - id: register
+      name: Register in Catalog
+      action: catalog:register 
+      input:
+        repoContentsUrl: '.'
+        catalogInfoPath: catalog-info.yaml
