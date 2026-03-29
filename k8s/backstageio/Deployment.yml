@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: backstageio
+  namespace: backstageio
+spec:
+  # replicas: 2 # updated 2 for HA
+  selector:
+    matchLabels:
+      app: backstageio
+  template:
+    metadata:
+      labels:
+        app: backstageio  
+      annotations:
+        description: "Deployment for the backstageio application"
+    spec:
+      containers:
+        - name: backstageio-container
+          image: errorhunter/backstageio:ea26adfab13fe9c01cee359705214377b56465a0
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+            runAsNonRoot: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+          envFrom:
+            - configMapRef:
+                name: backstageio-configmap
+            - secretRef:
+                name: backstageio-secret
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 1
+  revisionHistoryLimit: 3

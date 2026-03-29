@@ -1,0 +1,15 @@
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: backstageio-cert-tls  #domain-local-cert
+  namespace: backstageio
+spec:
+  secretName: backstageio-cert-tls
+  duration: 24h
+  renewBefore: 12h
+  commonName: backstageio.local
+  dnsNames:
+    - backstageio.local
+  issuerRef:
+    name: self-signed-issuer
+    kind: Issuer

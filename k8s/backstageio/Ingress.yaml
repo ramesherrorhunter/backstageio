@@ -1,0 +1,23 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: backstageio-ingress
+  namespace: backstageio
+  annotations:
+    cert-manager.io/issuer: "self-signed-issuer"
+spec:
+  tls:
+  - hosts:
+    - backstageio.local
+    secretName: backstageio-cert-tls
+  rules:
+  - host: backstageio.local
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: backstageio-service
+            port:
+              number: 80
